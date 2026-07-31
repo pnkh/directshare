@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Máy tính của tôi • DirectShare</title>
+<meta property="og:title" content="Máy tính của tôi"><meta property="og:description" content="Truy cập toàn máy riêng tư • đang kết nối tới máy chia sẻ">
+<style>body{margin:0;background:#0b0d12;color:#f4f6fa;font:16px Segoe UI,Arial,sans-serif;display:grid;place-items:center;min-height:100vh}.card{width:min(620px,calc(100% - 36px));box-sizing:border-box;padding:28px;background:#131720;border:1px solid #252b37;border-radius:16px}.muted{color:#98a2b3;line-height:1.6}a{color:#8ea6ff}.spin{width:28px;height:28px;border:3px solid #2b3342;border-top-color:#6d8bff;border-radius:50%;animation:s .8s linear infinite}@keyframes s{to{transform:rotate(360deg)}}</style></head>
+<body><main class="card"><div class="spin" id="spin"></div><h1>Máy tính của tôi</h1><p class="muted" id="status">Đang tìm endpoint DirectShare mới nhất…</p><p><a id="manual" href="#" hidden>Mở DirectShare</a></p></main>
+<script>
+const endpointApi="https://api.github.com/repos/pnkh/directshare/contents/_directshare/endpoints/b42ed277a9059c17db94860b12c186d0.json?ref=gh-pages";
+const statusEl=document.getElementById('status');const manual=document.getElementById('manual');
+async function resolveEndpoint(){
+  try{
+    const sep=endpointApi.includes('?')?'&':'?';
+    const response=await fetch(endpointApi+sep+'_='+Date.now(),{cache:'no-store',headers:{'Accept':'application/vnd.github+json'}});
+    if(!response.ok) throw new Error('GitHub API '+response.status);
+    const file=await response.json();
+    const clean=(file.content||'').replace(/\s/g,'');
+    const bytes=Uint8Array.from(atob(clean),c=>c.charCodeAt(0));
+    const data=JSON.parse(new TextDecoder().decode(bytes));
+    if(!data.active||!data.endpoint){statusEl.textContent='Máy chia sẻ hiện đang ngoại tuyến hoặc link đã được dừng.';document.getElementById('spin').hidden=true;return;}
+    manual.href=data.endpoint;manual.hidden=false;statusEl.textContent='Đang chuyển tới DirectShare…';
+    location.replace(data.endpoint);
+  }catch(error){document.getElementById('spin').hidden=true;statusEl.textContent='Chưa lấy được endpoint. Hãy tải lại trang sau vài giây.';}
+}
+resolveEndpoint();
+</script></body></html>
