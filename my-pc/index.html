@@ -17,13 +17,9 @@ function consumeDeviceFragment(){
   if(remembered){try{localStorage.setItem(storageKey,remembered);}catch(_e){}}
   if(location.hash) history.replaceState(null,'',location.pathname+location.search);
 }
-function submitRememberedDevice(endpoint,deviceToken){
-  const marker='/_ds/private-pc/';
-  if(!endpoint.includes(marker)){location.replace(endpoint);return;}
-  const action=endpoint.replace(marker,marker+'device/');
-  const form=document.createElement('form');form.method='post';form.action=action;form.style.display='none';
-  const input=document.createElement('input');input.type='hidden';input.name='device_token';input.value=deviceToken;
-  form.appendChild(input);document.body.appendChild(form);form.submit();
+function openRememberedDevice(endpoint,deviceToken){
+  const join=endpoint.includes('#')?'&':'#';
+  location.replace(endpoint+join+'ds_device='+encodeURIComponent(deviceToken));
 }
 async function resolveEndpoint(){
   try{
@@ -38,7 +34,7 @@ async function resolveEndpoint(){
     manual.href=data.endpoint;manual.hidden=false;statusEl.textContent='Đang chuyển tới DirectShare…';
     if(privateRoute){
       let deviceToken='';try{deviceToken=localStorage.getItem(storageKey)||'';}catch(_e){}
-      if(deviceToken){submitRememberedDevice(data.endpoint,deviceToken);return;}
+      if(deviceToken){openRememberedDevice(data.endpoint,deviceToken);return;}
     }
     location.replace(data.endpoint);
   }catch(error){document.getElementById('spin').hidden=true;statusEl.textContent='Chưa lấy được endpoint. Hãy tải lại trang sau vài giây.';}
