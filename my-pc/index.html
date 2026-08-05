@@ -6,7 +6,25 @@
 <body><main class="card"><div class="spin" id="spin"></div><h1>Máy tính của tôi</h1><p class="muted" id="status">Đang tìm endpoint DirectShare mới nhất…</p><p><a id="manual" href="#" hidden>Mở DirectShare</a></p></main>
 <script>
 const endpointApi="https://api.github.com/repos/pnkh/directshare/contents/_directshare/endpoints/b42ed277a9059c17db94860b12c186d0.json?ref=gh-pages";
+const privateRoute=true;
+const storageKey="directshare:remembered-device:80f81e029702e4e4663a";
 const statusEl=document.getElementById('status');const manual=document.getElementById('manual');
+function consumeDeviceFragment(){
+  if(!privateRoute) return;
+  const params=new URLSearchParams((location.hash||'').replace(/^#/,''));
+  if(params.get('ds_forget')==='1'){try{localStorage.removeItem(storageKey);}catch(_e){}}
+  const remembered=params.get('ds_remember');
+  if(remembered){try{localStorage.setItem(storageKey,remembered);}catch(_e){}}
+  if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+}
+function submitRememberedDevice(endpoint,deviceToken){
+  const marker='/_ds/private-pc/';
+  if(!endpoint.includes(marker)){location.replace(endpoint);return;}
+  const action=endpoint.replace(marker,marker+'device/');
+  const form=document.createElement('form');form.method='post';form.action=action;form.style.display='none';
+  const input=document.createElement('input');input.type='hidden';input.name='device_token';input.value=deviceToken;
+  form.appendChild(input);document.body.appendChild(form);form.submit();
+}
 async function resolveEndpoint(){
   try{
     const sep=endpointApi.includes('?')?'&':'?';
@@ -18,8 +36,12 @@ async function resolveEndpoint(){
     const data=JSON.parse(new TextDecoder().decode(bytes));
     if(!data.active||!data.endpoint){statusEl.textContent='Máy chia sẻ hiện đang ngoại tuyến hoặc link đã được dừng.';document.getElementById('spin').hidden=true;return;}
     manual.href=data.endpoint;manual.hidden=false;statusEl.textContent='Đang chuyển tới DirectShare…';
+    if(privateRoute){
+      let deviceToken='';try{deviceToken=localStorage.getItem(storageKey)||'';}catch(_e){}
+      if(deviceToken){submitRememberedDevice(data.endpoint,deviceToken);return;}
+    }
     location.replace(data.endpoint);
   }catch(error){document.getElementById('spin').hidden=true;statusEl.textContent='Chưa lấy được endpoint. Hãy tải lại trang sau vài giây.';}
 }
-resolveEndpoint();
+consumeDeviceFragment();resolveEndpoint();
 </script></body></html>
